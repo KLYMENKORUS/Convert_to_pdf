@@ -4,14 +4,24 @@ version = "0.1.0"
 description = "project to convert files to pdf"
 authors = ["KLYMENKORUS <klimenkoruslan11@gmail.com>"]
 readme = "README.md"
-packages = [{include = "convert_to_pdf"}]
+packages = [{include = "app"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
 fastapi = "^0.100.1"
 uvicorn = "^0.23.1"
 pydantic = "^2.1.1"
+aerich = "^0.7.2"
+tortoise-orm = {extras = ["asyncpg"], version = "^0.19.3"}
+asyncpg = "^0.28.0"
+python-dotenv = "^1.0.0"
 
+
+
+[tool.aerich]
+tortoise_orm = "app.database.config.settings.DB_CONFIG"
+location = "app/database/migrations"
+src_folder = "./."
 
 [build-system]
 requires = ["poetry-core"]
