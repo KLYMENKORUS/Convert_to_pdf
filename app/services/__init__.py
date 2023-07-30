@@ -1,1 +1,1 @@
-from .files import FileService
+from .files import FileService, FileServiceRedis

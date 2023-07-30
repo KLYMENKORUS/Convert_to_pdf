@@ -11,8 +11,8 @@ class Server:
 
     def __init__(self, app: FastAPI):
         self.__app = app
-        self.__register_table(self.__app)
-        self.__register_routes(self.__app)
+        self.__register_table(app)
+        self.__register_routes(app)
 
     def get_app(self) -> FastAPI:
         return self.__app
