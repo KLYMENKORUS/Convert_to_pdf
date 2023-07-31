@@ -1,27 +1,50 @@
-from io import BytesIO
+import os
+import re
+import subprocess
+import tempfile
 
-from docx import Document
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
+import aiofiles
+from fastapi import HTTPException, status
+
+from app.services.redis import RedisTools
 
 
 class Docx2Pdf:
 
-    def __init__(self, data: bytes) -> None:
+    def __init__(self, data: bytes, filename: str, timeout=None) -> None:
         self.data = data
+        self.filename = filename
+        self.timeout = timeout
 
-    async def convert(self):
-        docx_buffer = BytesIO(self.data)
-        doc = Document(docx_buffer)
+    def create_tempfile(self):
+        with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as temp_docx:
+            temp_docx.write(self.data)
 
-        pdf_buffer = BytesIO()
+        return temp_docx.name
 
-        canvas_pdf = canvas.Canvas(pdf_buffer, letter)
+    async def open_file(self, filename: str):
+        async with aiofiles.open(filename, 'rb') as file:
+            result = await file.read()
 
-        for para in doc.paragraphs:
-            canvas_pdf.drawString(72, 800, para.text)
-            canvas_pdf.showPage()
+        return result
 
-        canvas_pdf.save()
+    async def convert(self) -> bytes:
 
-        return pdf_buffer.getvalue()
+        if not await RedisTools.get_pair(self.filename):
+
+            args = ['libreoffice', '--headless', '--convert-to', 'pdf', '--outdir', 'temp', self.create_tempfile()]
+
+            process = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=self.timeout)
+            filename = re.search('-> (.*?) using filter', process.stdout.decode())
+
+            result = await self.open_file(f'{filename.group(1)}')
+
+            os.remove(filename.group(1))
+
+            return result
+
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f'A file with the same name: {self.filename} already exists'
+            )
