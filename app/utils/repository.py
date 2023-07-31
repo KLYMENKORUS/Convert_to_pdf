@@ -33,7 +33,10 @@ class TortoiseRepo(AbstractRepo):
         return await self.model.create(**kwargs)
 
     async def get(self, *args, **kwargs):
-        return await self.model.get(file_name=kwargs.get('file_name'))
+        if kwargs.get('file_name'):
+            return await self.model.get(file_name=kwargs.get('file_name'))
+        else:
+            return await self.model.get(email=kwargs.get('email'))
 
     async def delete(self, *args, **kwargs):
         return await self.model.delete()

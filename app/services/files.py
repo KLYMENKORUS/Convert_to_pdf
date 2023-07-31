@@ -1,5 +1,5 @@
 from app.utils import AbstractRepo
-from app.utils import Convert, DoesntNotExists
+from app.utils.wrapper import Convert, DoesntNotExists
 
 from .redis import RedisTools
 
