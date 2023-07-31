@@ -1,7 +1,7 @@
-from typing import Annotated
+from typing import Annotated, Any
 from io import BytesIO
 
-from fastapi import APIRouter, Depends, UploadFile, File, Response
+from fastapi import APIRouter, Depends, UploadFile, File, Response, status
 from pydantic import EmailStr
 
 from app.services import FileService, FileServiceRedis
@@ -16,12 +16,14 @@ async def add_files(
         file_serv: Annotated[FileService, Depends(file_service)],
         file: Annotated[UploadFile, File(...)],
         redis_serv: Annotated[FileServiceRedis, Depends(redis_service)]
-):
+) -> dict[str, Any]:
+
     # await service.create_file(file_name=file.filename, data_file=file)
     await redis_serv.write_to_redis(filename=file.filename.split('.')[0], data_file=file)
 
     return {
-        'response': 'ok', 'status': 200
+        'response': 'successfully converting file',
+        'status': status.HTTP_200_OK
     }
 
 

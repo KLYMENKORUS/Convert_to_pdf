@@ -4,7 +4,7 @@ from typing import ParamSpec, TypeVar, Callable, Awaitable
 from fastapi import HTTPException, status
 
 from app.services.redis import RedisTools
-from .convert import Docx2Pdf
+from app.utils.convert import Docx2Pdf
 
 
 P = ParamSpec("P")
@@ -44,7 +44,7 @@ class DoesntNotExists:
 
     def __call__(self, func: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
         @wraps(func)
-        async def wrapper(*args, **kwargs):
+        async def wrapper(*args: P.args, **kwargs: P.kwargs):
             match self.action:
                 case 'redis':
                     file_data = await RedisTools.get_pair(kwargs.get('filename'))
