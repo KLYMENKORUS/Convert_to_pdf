@@ -13,12 +13,15 @@ services:
   api:
     build:
       context: .
-      dockerfile: docker/Dockerfile
+      dockerfile: docker/api/Dockerfile
     restart: always
     depends_on:
       - db
+      - redis
     env_file:
       - .env
+    environment:
+      - API_REDIS_HOST=redis
     volumes:
       - .:/fastapi_app
     ports:
@@ -26,6 +29,16 @@ services:
     networks:
       - custom
     command: bash -c "poetry run aerich upgrade && poetry run uvicorn app:create_app --host 0.0.0.0 --port 8000 --reload"
+
+  redis:
+    container_name: redis
+    image: redis:latest
+
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    ports:
+      - "6380:6379"
 networks:
   custom:
 volumes:

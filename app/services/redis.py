@@ -15,7 +15,7 @@ class ConnectToRedis:
     def __call__(self, func: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
         @wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs):
-            redis = aioredis.from_url('redis://127.0.0.1:6379/', encoding='utf-8')
+            redis = aioredis.from_url('redis://redis:6379/', encoding='utf-8')
             FastAPICache.init(RedisBackend(redis))
             kwargs.update(redis=redis)
 
