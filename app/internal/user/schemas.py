@@ -15,3 +15,13 @@ class UserCreate(BaseModel):
     username: str
     email: EmailStr
     password: str
+
+
+class TokenSchemas(BaseModel):
+    access_token: str = Field(..., examples=[''])
+    token_type: str = Field(..., examples=['Bearer'])
+
+
+class TokenPayload(BaseModel):
+    sub: str = None
+    exp: int = None

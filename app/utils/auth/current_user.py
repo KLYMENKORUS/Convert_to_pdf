@@ -1,0 +1,56 @@
+from datetime import datetime
+from typing import Any
+
+from fastapi.security import OAuth2PasswordBearer
+from fastapi import Depends, HTTPException, status
+from jose import jwt
+from pydantic import ValidationError
+
+from app.database import JWT_SECRET_KEY, ALGORITHM
+from app.internal import TokenPayload
+from app.repositories.user import UserRepository
+
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login/token")
+
+
+class CurrentUserMiddleware:
+    
+    def __init__(self) -> None:
+        self.jwt_secret_key = JWT_SECRET_KEY
+        self.algorithm = ALGORITHM
+        self.user_repo = UserRepository()
+
+    async def __call__(self, token: str = Depends(oauth2_scheme)) -> Any:
+        return await self.get_current_user(token)
+    
+    async def get_current_user(self, token: str):
+        try:
+            payload = jwt.decode(token, self.jwt_secret_key, algorithms=[self.algorithm])
+            token_payload = TokenPayload(**payload)
+
+            if datetime.fromtimestamp(token_payload.exp) < datetime.now():
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Token expired",
+                        headers={"WWW-Authenticate": "Bearer"},
+                )
+
+        except (jwt.JWTError, ValidationError):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,  
+                detail="Could not validate credentials",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        user = await self.user_repo.get(email=token_payload.sub)
+
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Could not find user",
+            )
+
+        return user
+
+ 
