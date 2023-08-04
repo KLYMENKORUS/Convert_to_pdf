@@ -16,13 +16,18 @@ DB_MESSAGE = 'File with given name does not exist'
 
 class Convert:
 
+    def __init__(self, action: str) -> None:
+        self.action = action
+        self.docx2pdf = Docx2Pdf()
+
     def __call__(self, func: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
         @wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs):
-            pdf = await Docx2Pdf(
-                await kwargs.get('data_file').read(),
-                kwargs.get('filename')
-            ).convert()
+            pdf = await self.docx2pdf.adjacent_convert(
+                action=self.action,
+                filename=kwargs.get('filename'),
+                data=await kwargs.get('data_file').read()
+            )
 
             kwargs.update(data_file=pdf)
 

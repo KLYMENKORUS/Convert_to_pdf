@@ -13,13 +13,20 @@ router = APIRouter(prefix='/file', tags=['File'])
 
 @router.post('/add', summary='Add a new file and convert here')
 async def add_files(
-        file_serv: Annotated[FileService, Depends(file_service)],
-        file: Annotated[UploadFile, File(...)],
-        redis_serv: Annotated[FileServiceRedis, Depends(redis_service)]
+    file_serv: Annotated[FileService, Depends(file_service)],
+    file: Annotated[UploadFile, File(...)],
+    redis_serv: Annotated[FileServiceRedis, Depends(redis_service)],
+    username: str | None = None
 ) -> dict[str, Any]:
-
-    # await service.create_file(file_name=file.filename, data_file=file)
-    await redis_serv.write_to_redis(filename=file.filename.split('.')[0], data_file=file)
+    
+    if username is None:
+        await redis_serv.write_to_redis(
+            filename=file.filename.split('.')[0], data_file=file)
+    
+    else:
+        await file_serv.create_file(
+            filename=file.filename.split('.')[0], data_file=file,
+            email=username)
 
     return {
         'response': 'successfully converting file',

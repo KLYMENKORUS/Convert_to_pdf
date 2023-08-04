@@ -1,5 +1,6 @@
 from app.utils import AbstractRepo
 from app.utils.wrapper import Convert, DoesntNotExists
+from app.utils.auth.decorator import CheckUser
 
 from .redis import RedisTools
 
@@ -9,14 +10,15 @@ class FileService:
     def __init__(self, file_repo: AbstractRepo):
         self.file_repo: AbstractRepo = file_repo()
 
-    @Convert()
+    @Convert('db')
+    @CheckUser()
     async def create_file(self, **kwargs):
         return await self.file_repo.add(**kwargs)
 
 
 class FileServiceRedis:
 
-    @Convert()
+    @Convert('redis')
     async def write_to_redis(self, **kwargs):
         return await RedisTools.set_pair(
             kwargs.get('filename'), kwargs.get('data_file')
