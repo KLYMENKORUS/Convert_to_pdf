@@ -39,6 +39,8 @@ services:
       - REDIS_PORT=6379
     ports:
       - "6380:6379"
+    networks:
+      - custom
 networks:
   custom:
 volumes:
