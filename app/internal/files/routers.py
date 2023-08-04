@@ -13,10 +13,10 @@ router = APIRouter(prefix='/file', tags=['File'])
 
 @router.post('/add', summary='Add a new file and convert here')
 async def add_files(
-    file_serv: Annotated[FileService, Depends(file_service)],
     file: Annotated[UploadFile, File(...)],
+    file_serv: Annotated[FileService, Depends(file_service)],
     redis_serv: Annotated[FileServiceRedis, Depends(redis_service)],
-    username: str | None = None
+    username: EmailStr | None = None
 ) -> dict[str, Any]:
     
     if username is None:
@@ -37,10 +37,18 @@ async def add_files(
 @router.get('/get', summary='Get file by name')
 async def get_file(
         filename: str,
-        redis_serv: Annotated[FileServiceRedis, Depends(redis_service)]
+        redis_serv: Annotated[FileServiceRedis, Depends(redis_service)],
+        file_serv: Annotated[FileService, Depends(file_service)],
+        username: EmailStr | None = None
 ) -> Response:
+    
+    file = None
 
-    file = await redis_serv.get_file_redis(filename=filename)
+    if username is None:
+        file = await redis_serv.get_file_redis(filename=filename)
+    else:
+        file = await file_serv.get_file_db(email=username, file_name=filename)
+
     content = BytesIO(file).read()
 
     return Response(

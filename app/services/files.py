@@ -14,6 +14,12 @@ class FileService:
     @CheckUser()
     async def create_file(self, **kwargs):
         return await self.file_repo.add(**kwargs)
+    
+    @CheckUser()
+    @DoesntNotExists('db')
+    async def get_file_db(self, **kwargs):
+        file = await self.file_repo.get(file_name=kwargs.get('file_name'))
+        return file.data_file
 
 
 class FileServiceRedis:
