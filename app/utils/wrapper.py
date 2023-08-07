@@ -19,15 +19,15 @@ REDIS_MESSAGE = 'There is no file named in temporary storage'
 DB_MESSAGE = 'File with given name does not exist'
 
 
+@dataclass(frozen=True, slots=True)
 class Convert:
 
-    def __init__(self, action: str) -> None:
-        self.action = action
-        self.docx2pdf = Docx2Pdf()
-        self.wrong_format = HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail='Wrong file format'
-        )
+    action: str
+    docx2pdf = Docx2Pdf()
+    wrong_format = HTTPException(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        detail='Wrong file format'
+    )
 
     def __call__(self, func: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
         @wraps(func)
@@ -50,17 +50,17 @@ class Convert:
         return wrapper
 
 
+@dataclass(frozen=True, slots=True)
 class DoesntNotExists:
 
-    def __init__(self, action: str) -> None:
-        self.action = action
-        self.message_redis = REDIS_MESSAGE
-        self.message_db = DB_MESSAGE
-        self.exception = HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=self.message_redis if action == 'redis' else self.message_db
-        )
-        self.file_repo = FileRepository()
+    action: str
+    message_redis = REDIS_MESSAGE
+    message_db = DB_MESSAGE
+    exception = HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail=message_redis if action == 'redis' else message_db
+    )
+    file_repo = FileRepository()
 
     def __call__(self, func: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
         @wraps(func)
