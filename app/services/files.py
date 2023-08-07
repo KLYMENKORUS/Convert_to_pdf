@@ -13,7 +13,11 @@ class FileService:
     @Convert('db')
     @CheckUser()
     async def create_file(self, **kwargs):
-        return await self.file_repo.add(**kwargs)
+        return await self.file_repo.add(
+            user=kwargs.get('user'),
+            file_name=kwargs.get('filename').split('.')[0],
+            data_file=kwargs.get('data_file')
+        )
     
     @CheckUser()
     @DoesntNotExists('db')
@@ -27,7 +31,8 @@ class FileServiceRedis:
     @Convert('redis')
     async def write_to_redis(self, **kwargs):
         return await RedisTools.set_pair(
-            kwargs.get('filename'), kwargs.get('data_file')
+            kwargs.get('filename').split('.')[0],
+            kwargs.get('data_file')
         )
 
     @DoesntNotExists('redis')

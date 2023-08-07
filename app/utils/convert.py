@@ -2,24 +2,25 @@ import os
 import re
 import subprocess
 import tempfile
+from dataclasses import dataclass
 
 import aiofiles
 from fastapi import HTTPException, status
-from tortoise.exceptions import DoesNotExist
+from tortoise.exceptions import DoesNotExist, IntegrityError
 
 from app.services.redis import RedisTools
 from app.repositories.files import FileRepository
 
 
+@dataclass(frozen=True, slots=True)
 class Docx2Pdf:
 
-    def __init__(self, timeout=None) -> None:
-        self.timeout = timeout
-        self.file_repo = FileRepository()
-        self.exception = HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f'A file with the same name already exists'
-            )
+    timeout = None
+    file_repo = FileRepository()
+    exception = HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail=f'A file with the same name already exists'
+        )
 
     def create_tempfile(self, data: bytes):
         with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as temp_docx:
@@ -62,5 +63,5 @@ class Docx2Pdf:
                 try:
                     if await self.file_repo.get(file_name=kwargs.get('filename')):
                         raise self.exception
-                except DoesNotExist:
+                except (DoesNotExist, IntegrityError):
                     return await self.convert(data=kwargs.get('data'))

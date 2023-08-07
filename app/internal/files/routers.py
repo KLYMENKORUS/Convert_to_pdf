@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, UploadFile, File, Response, status
 from pydantic import EmailStr
 
 from app.services import FileService, FileServiceRedis
+from app.utils.format_file import FormatFile
 from .dependencies import file_service, redis_service
 
 
@@ -14,6 +15,7 @@ router = APIRouter(prefix='/file', tags=['File'])
 @router.post('/add', summary='Add a new file and convert here')
 async def add_files(
     file: Annotated[UploadFile, File(...)],
+    format_file: FormatFile,
     file_serv: Annotated[FileService, Depends(file_service)],
     redis_serv: Annotated[FileServiceRedis, Depends(redis_service)],
     username: EmailStr | None = None
@@ -21,12 +23,13 @@ async def add_files(
     
     if username is None:
         await redis_serv.write_to_redis(
-            filename=file.filename.split('.')[0], data_file=file)
+            filename=file.filename, data_file=file,
+            format_file=format_file)
     
     else:
         await file_serv.create_file(
-            filename=file.filename.split('.')[0], data_file=file,
-            email=username)
+            filename=file.filename, data_file=file,
+            email=username, format_file=format_file)
 
     return {
         'response': 'successfully converting file',
