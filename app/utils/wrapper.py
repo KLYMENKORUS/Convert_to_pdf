@@ -1,7 +1,10 @@
+import asyncio
+from dataclasses import dataclass
 from functools import wraps
 from typing import ParamSpec, TypeVar, Callable, Awaitable
 
 from fastapi import HTTPException, status
+from fastapi.concurrency import run_in_threadpool
 from tortoise.exceptions import DoesNotExist
 
 from app.services.redis import RedisTools
@@ -21,20 +24,29 @@ class Convert:
     def __init__(self, action: str) -> None:
         self.action = action
         self.docx2pdf = Docx2Pdf()
+        self.wrong_format = HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail='Wrong file format'
+        )
 
     def __call__(self, func: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
         @wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs):
-            pdf = await self.docx2pdf.adjacent_convert(
-                action=self.action,
-                filename=kwargs.get('filename'),
-                data=await kwargs.get('data_file').read()
-            )
+            if kwargs.get('format_file') == '.docx' and \
+                kwargs.get('filename').split('.')[1] == 'docx':
+                pdf = await self.docx2pdf.adjacent_convert(
+                    action=self.action,
+                    filename=kwargs.get('filename').split('.')[0],
+                    data=await kwargs.get('data_file').read()
+                )
 
-            kwargs.update(data_file=pdf)
+                kwargs.update(data_file=pdf)
+                kwargs.pop('format_file')
 
-            return await func(*args, **kwargs)
-
+                return await func(*args, **kwargs)
+            else:
+                raise self.wrong_format
+            
         return wrapper
 
 
@@ -68,5 +80,30 @@ class DoesntNotExists:
                         
                     except DoesNotExist:
                         raise self.exception
+
+        return wrapper
+
+
+@dataclass(frozen=True, slots=True)
+class RepeatEvery:
+    seconds: float | int
+
+    def __call__(self, func: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
+
+        @wraps(func)
+        async def wrapper():
+            is_coroutine = asyncio.iscoroutinefunction(func)
+            async def loop():
+                while True:
+                    try:
+                        if is_coroutine:
+                            await func()
+                        else:
+                            await run_in_threadpool(func)
+                    except Exception as e:
+                        print(e)
+                    await asyncio.sleep(self.seconds)
+
+            asyncio.create_task(loop())
 
         return wrapper
