@@ -40,3 +40,8 @@ class RedisTools:
     @ConnectToRedis()
     async def get_keys(cls, **kwargs):
         return await kwargs.get('redis').keys()
+    
+    @classmethod
+    @ConnectToRedis()
+    async def flush(cls, **kwargs):
+        return await kwargs.get('redis').flushdb()
