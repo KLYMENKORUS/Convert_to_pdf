@@ -1,5 +1,7 @@
 from dataclasses import dataclass
-from typing import Any
+from typing import Annotated, Any
+
+from fastapi import Depends
 
 
 from app.repositories.files import FileRepository
@@ -26,3 +28,14 @@ class OperationFiles:
             return await cls.redis_serv.get_file_redis(**kwargs)
         else:
             return await cls.file_serv.get_file_db(**kwargs)
+    
+    @classmethod
+    async def all_operation(cls, **kwargs: Any) -> Any:
+        return await cls.file_serv.all_files_by_user(**kwargs)
+    
+    @classmethod
+    async def file_delete(cls, **kwargs: Any) -> None:
+        await cls.file_serv.file_delete(**kwargs)
+
+
+file_services = Annotated[OperationFiles, Depends(OperationFiles)]

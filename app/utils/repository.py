@@ -39,8 +39,11 @@ class TortoiseRepo(AbstractRepo):
             return await self.model.get(email=kwargs.get('email'))
 
     async def delete(self, *args, **kwargs):
-        return await self.model.delete()
+        return await self.model.filter(
+            file_name=kwargs.get('filename'),
+            user_id=kwargs.get('user_id')
+            ).delete()
 
-    async def all_by_filter(self, *args, **kwargs):
-        return self.model.filter(user=kwargs.get('user'))
+    async def all_by_filter(self, **kwargs):
+        return await self.model.filter(user_id=kwargs.get('user_id'))
 

@@ -1,3 +1,4 @@
+from typing import Any
 from app.utils import AbstractRepo
 from app.utils.wrapper import Convert, DoesntNotExists
 from app.utils.auth.decorator import CheckUser
@@ -24,12 +25,19 @@ class FileService:
     async def get_file_db(self, **kwargs) -> bytes:
         file = await self.file_repo.get(file_name=kwargs.get('filename'))
         return file.data_file
+    
+    async def all_files_by_user(self, **kwargs) -> Any:
+        return await self.file_repo.all_by_filter(**kwargs)
+    
+    @DoesntNotExists('db')
+    async def file_delete(self, **kwargs) -> None:
+        await self.file_repo.delete(**kwargs)
 
 
 class FileServiceRedis:
 
     @Convert('redis')
-    async def write_to_redis(self, **kwargs):
+    async def write_to_redis(self, **kwargs) -> Any:
         return await RedisTools.set_pair(
             kwargs.get('filename').split('.')[0],
             kwargs.get('data_file')
