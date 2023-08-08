@@ -21,8 +21,8 @@ class FileService:
     
     @CheckUser()
     @DoesntNotExists('db')
-    async def get_file_db(self, **kwargs):
-        file = await self.file_repo.get(file_name=kwargs.get('file_name'))
+    async def get_file_db(self, **kwargs) -> bytes:
+        file = await self.file_repo.get(file_name=kwargs.get('filename'))
         return file.data_file
 
 
@@ -36,6 +36,6 @@ class FileServiceRedis:
         )
 
     @DoesntNotExists('redis')
-    async def get_file_redis(self, **kwargs):
+    async def get_file_redis(self, **kwargs) -> bytes:
         return kwargs.get('file_data')
 

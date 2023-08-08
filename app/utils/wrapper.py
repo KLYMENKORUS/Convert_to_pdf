@@ -53,7 +53,7 @@ class Convert:
 @dataclass(frozen=True, slots=True)
 class DoesntNotExists:
 
-    action: str
+    action: str = 'db'
     message_redis = REDIS_MESSAGE
     message_db = DB_MESSAGE
     exception = HTTPException(
@@ -75,7 +75,7 @@ class DoesntNotExists:
                 
                 case 'db':
                     try:
-                        if await self.file_repo.get(file_name=kwargs.get('file_name')):
+                        if await self.file_repo.get(file_name=kwargs.get('filename')):
                             return await func(*args, **kwargs)
                         
                     except DoesNotExist:

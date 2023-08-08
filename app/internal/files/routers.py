@@ -4,9 +4,8 @@ from io import BytesIO
 from fastapi import APIRouter, Depends, UploadFile, File, Response, status
 from pydantic import EmailStr
 
-from app.services import FileService, FileServiceRedis
 from app.utils.format_file import FormatFile
-from .dependencies import file_service, redis_service
+from .dependencies import OperationFiles
 
 
 router = APIRouter(prefix='/file', tags=['File'])
@@ -16,20 +15,14 @@ router = APIRouter(prefix='/file', tags=['File'])
 async def add_files(
     file: Annotated[UploadFile, File(...)],
     format_file: FormatFile,
-    file_serv: Annotated[FileService, Depends(file_service)],
-    redis_serv: Annotated[FileServiceRedis, Depends(redis_service)],
+    file_service: Annotated[OperationFiles, Depends(OperationFiles)],
     username: EmailStr | None = None
 ) -> dict[str, Any]:
-    
-    if username is None:
-        await redis_serv.write_to_redis(
-            filename=file.filename, data_file=file,
-            format_file=format_file)
-    
-    else:
-        await file_serv.create_file(
-            filename=file.filename, data_file=file,
-            email=username, format_file=format_file)
+
+    await file_service.add_operation(
+        filename=file.filename, data_file=file,
+        format_file=format_file, email=username
+    )
 
     return {
         'response': 'successfully converting file',
@@ -40,17 +33,11 @@ async def add_files(
 @router.get('/get', summary='Get file by name')
 async def get_file(
         filename: str,
-        redis_serv: Annotated[FileServiceRedis, Depends(redis_service)],
-        file_serv: Annotated[FileService, Depends(file_service)],
+        file_service: Annotated[OperationFiles, Depends(OperationFiles)],
         username: EmailStr | None = None
 ) -> Response:
     
-    file = None
-
-    if username is None:
-        file = await redis_serv.get_file_redis(filename=filename)
-    else:
-        file = await file_serv.get_file_db(email=username, file_name=filename)
+    file = await file_service.get_operation(email=username, filename=filename)
 
     content = BytesIO(file).read()
 
