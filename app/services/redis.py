@@ -11,12 +11,11 @@ R = TypeVar("R")
 
 
 class ConnectToRedis:
-    def __call__(
-        self, func: Callable[P, Awaitable[R]]
-    ) -> Callable[P, Awaitable[R]]:
+
+    def __call__(self, func: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
         @wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs):
-            redis = aioredis.from_url("redis://redis:6379/", encoding="utf-8")
+            redis = aioredis.from_url('redis://redis:6379/', encoding='utf-8')
             FastAPICache.init(RedisBackend(redis))
             kwargs.update(redis=redis)
 
@@ -26,22 +25,23 @@ class ConnectToRedis:
 
 
 class RedisTools:
+
     @classmethod
     @ConnectToRedis()
     async def set_pair(cls, file_name: str, file_data: bytes, **kwargs):
-        return await kwargs.get("redis").set(file_name, file_data)
+        return await kwargs.get('redis').set(file_name, file_data)
 
     @classmethod
     @ConnectToRedis()
     async def get_pair(cls, file_name: str, **kwargs):
-        return await kwargs.get("redis").get(file_name)
+        return await kwargs.get('redis').get(file_name)
 
     @classmethod
     @ConnectToRedis()
     async def get_keys(cls, **kwargs):
-        return await kwargs.get("redis").keys()
-
+        return await kwargs.get('redis').keys()
+    
     @classmethod
     @ConnectToRedis()
     async def flush(cls, **kwargs):
-        return await kwargs.get("redis").flushdb()
+        return await kwargs.get('redis').flushdb()

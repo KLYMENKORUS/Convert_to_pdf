@@ -8,6 +8,7 @@ from app.utils.wrapper import RepeatEvery
 
 
 class Server:
+
     __app: FastAPI
 
     def __init__(self, app: FastAPI):
@@ -21,14 +22,20 @@ class Server:
 
     @staticmethod
     def __register_table(app: FastAPI):
-        register_tortoise(app=app, config=DB_CONFIG, generate_schemas=False)
-
+        register_tortoise(
+            app=app,
+            config=DB_CONFIG,
+            generate_schemas=False
+        )
+    
     @staticmethod
     def __register_events(app: FastAPI):
-        @app.on_event("startup")
-        @RepeatEvery(seconds=60 * 5)
+
+        @app.on_event('startup')
+        @RepeatEvery(seconds=60*5)
         async def on_startup():
             await RedisTools.flush()
+
 
     @staticmethod
     def __register_routes(app: FastAPI):

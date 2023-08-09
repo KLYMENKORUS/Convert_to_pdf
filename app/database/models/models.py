@@ -13,6 +13,8 @@ class User(Model):
 
 class File(Model):
     id = fields.UUIDField(pk=True)
-    user = fields.ForeignKeyField("models.User", related_name="users")
+    user = fields.ForeignKeyField('models.User', related_name='users')
     file_name = fields.CharField(max_length=128, null=False, unique=True)
     data_file = fields.BinaryField()
+
+

@@ -2,6 +2,7 @@ from passlib.context import CryptContext
 
 
 class Hasher:
+
     password_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
     @classmethod

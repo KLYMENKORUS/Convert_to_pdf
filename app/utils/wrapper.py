@@ -15,77 +15,69 @@ from app.repositories.files import FileRepository
 P = ParamSpec("P")
 R = TypeVar("R")
 
-REDIS_MESSAGE = "There is no file named in temporary storage"
-DB_MESSAGE = "File with given name does not exist"
+REDIS_MESSAGE = 'There is no file named in temporary storage'
+DB_MESSAGE = 'File with given name does not exist'
 
 
 @dataclass(frozen=True, slots=True)
 class Convert:
+
     action: str
     docx2pdf = Docx2Pdf()
     wrong_format = HTTPException(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        detail="Wrong file format",
+        detail='Wrong file format'
     )
 
-    def __call__(
-        self, func: Callable[P, Awaitable[R]]
-    ) -> Callable[P, Awaitable[R]]:
+    def __call__(self, func: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
         @wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs):
-            if (
-                kwargs.get("format_file") == ".docx"
-                and kwargs.get("filename").split(".")[1] == "docx"
-            ):
+            if kwargs.get('format_file') == '.docx' and \
+                kwargs.get('filename').split('.')[1] == 'docx':
                 pdf = await self.docx2pdf.adjacent_convert(
                     action=self.action,
-                    filename=kwargs.get("filename").split(".")[0],
-                    data=await kwargs.get("data_file").read(),
+                    filename=kwargs.get('filename').split('.')[0],
+                    data=await kwargs.get('data_file').read()
                 )
 
                 kwargs.update(data_file=pdf)
-                kwargs.pop("format_file")
+                kwargs.pop('format_file')
 
                 return await func(*args, **kwargs)
             else:
                 raise self.wrong_format
-
+            
         return wrapper
 
 
 @dataclass(frozen=True, slots=True)
 class DoesntNotExists:
-    action: str = "db"
+
+    action: str = 'db'
     message_redis = REDIS_MESSAGE
     message_db = DB_MESSAGE
     exception = HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
-        detail=message_redis if action == "redis" else message_db,
+        detail=message_redis if action == 'redis' else message_db
     )
     file_repo = FileRepository()
 
-    def __call__(
-        self, func: Callable[P, Awaitable[R]]
-    ) -> Callable[P, Awaitable[R]]:
+    def __call__(self, func: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
         @wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs):
             match self.action:
-                case "redis":
-                    if file_data := await RedisTools.get_pair(
-                        kwargs.get("filename")
-                    ):
+                case 'redis':
+                    if file_data := await RedisTools.get_pair(kwargs.get('filename')):
                         kwargs.update(file_data=file_data)
                         return await func(*args, **kwargs)
                     else:
                         raise self.exception
-
-                case "db":
+                
+                case 'db':
                     try:
-                        if await self.file_repo.get(
-                            file_name=kwargs.get("filename")
-                        ):
+                        if await self.file_repo.get(file_name=kwargs.get('filename')):
                             return await func(*args, **kwargs)
-
+                        
                     except DoesNotExist:
                         raise self.exception
 
@@ -96,13 +88,11 @@ class DoesntNotExists:
 class RepeatEvery:
     seconds: float | int
 
-    def __call__(
-        self, func: Callable[P, Awaitable[R]]
-    ) -> Callable[P, Awaitable[R]]:
+    def __call__(self, func: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
+
         @wraps(func)
         async def wrapper():
             is_coroutine = asyncio.iscoroutinefunction(func)
-
             async def loop():
                 while True:
                     try:
