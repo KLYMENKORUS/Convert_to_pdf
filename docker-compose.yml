@@ -10,6 +10,20 @@ services:
       - "5434:5432"
     networks:
       - custom
+  db_test:
+    container_name: "convert_test"
+    image: postgres:14.1-alpine
+    restart: always
+    environment:
+      - POSTGRES_DB=Test_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_HOST=db_test
+    ports:
+      - "5436:5432"
+    networks:
+      - custom
   api:
     build:
       context: .
