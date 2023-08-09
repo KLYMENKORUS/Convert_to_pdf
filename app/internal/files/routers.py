@@ -8,19 +8,23 @@ from app.utils.format_file import FormatFile
 from app.internal.user.dependencies import current_user
 from app.database import User
 from .dependencies import file_services
-from .schemas import FilesModel
+from .schemas import FilesModel, ResponseFiles
 
 
 router = APIRouter(prefix="/file", tags=["File"])
 
 
-@router.post("/add", summary="Add a new file and convert here")
+@router.post(
+    "/add",
+    summary="Add a new file and convert here",
+    response_model=ResponseFiles,
+)
 async def add_files(
     file: Annotated[UploadFile, File(...)],
     format_file: FormatFile,
     file_service: file_services,
     username: EmailStr | None = None,
-) -> dict[str, Any]:
+) -> ResponseFiles:
     await file_service.add_operation(
         filename=file.filename,
         data_file=file,
@@ -28,10 +32,9 @@ async def add_files(
         email=username,
     )
 
-    return {
-        "response": "successfully converting file",
-        "status": status.HTTP_200_OK,
-    }
+    return ResponseFiles(
+        response="successfully converting file", status=status.HTTP_200_OK
+    )
 
 
 @router.get("/get", summary="Get file by name")
