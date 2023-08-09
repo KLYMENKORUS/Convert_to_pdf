@@ -10,6 +10,20 @@ services:
       - "5434:5432"
     networks:
       - custom
+  db_test:
+    container_name: "convert_test"
+    image: postgres:14.1-alpine
+    restart: always
+    environment:
+      - POSTGRES_DB=Testdb
+      - POSTGRES_USER=postgres_test
+      - POSTGRES_PASSWORD=postgres_test
+      - POSTGRES_PORT=5436
+      - POSTGRES_HOST=127.0.0.1
+    ports:
+      - "5436:5432"
+    networks:
+      - custom
   api:
     build:
       context: .
@@ -18,6 +32,7 @@ services:
     depends_on:
       - db
       - redis
+      - db_test
     env_file:
       - .env
     environment:
