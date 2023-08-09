@@ -34,3 +34,33 @@ async def test_login_user(client: AsyncClient):
     )
     assert response.status_code == HTTPStatus.OK
     assert len(response.json()) == 2
+
+
+async def test_login_failed_username(client: AsyncClient):
+    """
+    Test login failed
+
+    Args:
+        client (AsyncClient): AsyncClient
+    """
+    response = await client.post(
+        url="user/login",
+        data={"username": "user@examples.com", "password": "string"},
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+    )
+    assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+async def test_login_failed_password(client: AsyncClient):
+    """
+    Test login failed
+
+    Args:
+        client (AsyncClient): AsyncClient
+    """
+    response = await client.post(
+        url="user/login",
+        data={"username": "user@example.com", "password": "12345"},
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+    )
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
