@@ -15,6 +15,7 @@ R = TypeVar("R")
 class UserAlreadyExists:
     def __init__(self):
         self.user_service = UserRepository()
+        self.message_error = "User with this email: {} already exist"
 
     def __call__(
         self, func: Callable[P, Awaitable[R]]
@@ -25,7 +26,7 @@ class UserAlreadyExists:
                 if await self.user_service.get(**kwargs):
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
-                        detail=f'User with this email: {kwargs.get("email")} already exist',
+                        detail=self.message_error.format(kwargs.get("email")),
                     )
             except DoesNotExist:
                 return await func(*args, **kwargs)
