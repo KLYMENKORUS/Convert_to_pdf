@@ -1,9 +1,5 @@
-from pathlib import Path
-import aiofiles
 from httpx import AsyncClient
 from http import HTTPStatus
-
-from .filetest.path_file import DOCXFILE
 
 
 async def test_create_user(client: AsyncClient):
@@ -15,7 +11,7 @@ async def test_create_user(client: AsyncClient):
     """
     user = {
         "username": "string",
-        "email": "user@example.com",
+        "email": "user1@example.com",
         "password": "string",
     }
 
