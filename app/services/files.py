@@ -4,7 +4,7 @@ from typing import Any, Optional
 from celery.result import AsyncResult
 
 from app.utils import AbstractRepo
-from app.utils.wrapper import Convert, DoesntNotExists
+from app.utils.wrapper import Convert, DoesntNotExists, TasksCelery
 from app.utils.auth.decorator import CheckUser
 
 from .redis import RedisTools
@@ -32,18 +32,17 @@ class FileService:
         return
 
     @classmethod
-    async def to_database(cls):
-        if files := await RedisTools.task_celery():
-            file_id = files[0].split(b"-", 3)[-1]
-            file = AsyncResult(file_id)
+    @TasksCelery()
+    async def to_database(cls, **kwargs: Any):
+        file: AsyncResult = kwargs.get("file")
 
-            if file.status == "SUCCESS":
-                cls.dict_file.update(data_file=file.result)
-                await cls.func_create(**cls.dict_file)
-                logger.info("Successfully file added to Database")
+        if file.status == "SUCCESS" and file is not None:
+            cls.dict_file.update(data_file=file.result)
+            await cls.func_create(**cls.dict_file)
+            logger.info("Successfully file added to Database")
 
-                await RedisTools.delete_key(*files)
-                logger.info("Successfully deleted")
+            await RedisTools.delete_key(*kwargs.get("files"))
+            logger.info("Successfully deleted")
 
     @CheckUser()
     @DoesntNotExists("db")
@@ -69,17 +68,16 @@ class FileServiceRedis:
         return
 
     @classmethod
-    async def to_redis(cls):
-        if files := await RedisTools.task_celery():
-            file_id = files[0].split(b"-", 3)[-1]
-            file = AsyncResult(file_id)
+    @TasksCelery()
+    async def to_redis(cls, **kwargs: Any):
+        file: AsyncResult = kwargs.get("file")
 
-            if file.status == "SUCCESS":
-                await RedisTools.set_pair(cls.filename, file.result)
-                logger.info("Successfully file added to Redis")
+        if file.status == "SUCCESS" and file is not None:
+            await RedisTools.set_pair(cls.filename, file.result)
+            logger.info("Successfully file added to Redis")
 
-                await RedisTools.delete_key(*files)
-                logger.info("Successfully deleted")
+            await RedisTools.delete_key(*kwargs.get("files"))
+            logger.info("Successfully deleted")
 
     @DoesntNotExists("redis")
     async def get_file_redis(self, **kwargs: Any) -> bytes:

@@ -6,6 +6,7 @@ from typing import ParamSpec, TypeVar, Callable, Awaitable
 from fastapi import HTTPException, status
 from fastapi.concurrency import run_in_threadpool
 from tortoise.exceptions import DoesNotExist
+from celery.result import AsyncResult
 
 from app.services.redis import RedisTools
 from app.utils.convert import Convert
@@ -115,5 +116,24 @@ class RepeatEvery:
                     await asyncio.sleep(self.seconds)
 
             asyncio.create_task(loop())
+
+        return wrapper
+
+
+@dataclass(slots=True)
+class TasksCelery:
+    def __call__(
+        self, func: Callable[P, Awaitable[R]]
+    ) -> Callable[P, Awaitable[R]]:
+        @wraps(func)
+        async def wrapper(*args: P.args, **kwargs: P.kwargs):
+            if files := await RedisTools.task_celery():
+                file_id = files[0].split(b"-", 3)[-1]
+                file = AsyncResult(file_id)
+
+                kwargs.setdefault("file", file)
+                kwargs.setdefault("files", files)
+
+                return await func(*args, **kwargs)
 
         return wrapper
