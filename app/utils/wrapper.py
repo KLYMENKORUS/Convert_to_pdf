@@ -8,7 +8,7 @@ from fastapi.concurrency import run_in_threadpool
 from tortoise.exceptions import DoesNotExist
 
 from app.services.redis import RedisTools
-from app.utils.convert import Docx2Pdf
+from app.utils.convert import Convert
 from app.repositories.files import FileRepository
 
 
@@ -22,7 +22,7 @@ DB_MESSAGE = "File with given name does not exist"
 @dataclass(frozen=True, slots=True)
 class Convert:
     action: str
-    docx2pdf = Docx2Pdf()
+    convert = Convert()
     wrong_format = HTTPException(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         detail="Wrong file format",
@@ -37,13 +37,13 @@ class Convert:
                 kwargs.get("format_file") == ".docx"
                 and kwargs.get("filename").split(".")[1] == "docx"
             ):
-                pdf = await self.docx2pdf.adjacent_convert(
+                pdf = await self.convert(
                     action=self.action,
                     filename=kwargs.get("filename").split(".")[0],
                     data=await kwargs.get("data_file").read(),
                 )
 
-                kwargs.update(data_file=pdf)
+                kwargs.update(result=pdf)
                 kwargs.pop("format_file")
 
                 return await func(*args, **kwargs)

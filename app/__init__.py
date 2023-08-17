@@ -1,6 +1,9 @@
-from fastapi import FastAPI
-from app.configuration.server import Server
+import logging
+
 import uvicorn
+from fastapi import FastAPI
+
+from app.configuration.server import Server
 
 
 def create_app(_=None) -> FastAPI:
@@ -12,6 +15,11 @@ def create_app(_=None) -> FastAPI:
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        level="INFO".upper(),
+        format="%(asctime)s | %(levelname)s | %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
     uvicorn.run(
         app=create_app(),
         port=7000,
