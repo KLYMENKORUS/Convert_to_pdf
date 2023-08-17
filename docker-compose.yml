@@ -55,6 +55,42 @@ services:
       - "6380:6379"
     networks:
       - custom
+
+  celery:
+    container_name: celery
+    image: celery:latest
+    build:
+      context: .
+      dockerfile: docker/api/Dockerfile
+    environment:
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    depends_on:
+      - api
+      - redis
+    networks:
+      - custom
+    command: poetry run celery -A app.worker.tasks:celery worker --loglevel=info
+
+  dashboard:
+    container_name: dashboard
+    image: mher/flower
+    build:
+      context: .
+      dockerfile: docker/api/Dockerfile
+    environment:
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    depends_on:
+      - api
+      - redis
+      - celery
+    networks:
+      - custom
+    ports:
+      - "5556:5555"
+    command: poetry run celery flower --port=5555
+
 networks:
   custom:
 volumes:
