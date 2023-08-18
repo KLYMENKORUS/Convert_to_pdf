@@ -37,11 +37,15 @@ class Convert:
             if (
                 kwargs.get("format_file") == ".docx"
                 and kwargs.get("filename").split(".")[1] == "docx"
+            ) or (
+                kwargs.get("format_file") == ".jpg"
+                and kwargs.get("filename").split(".")[1] == "jpg"
             ):
                 pdf = await self.convert(
                     action=self.action,
                     filename=kwargs.get("filename").split(".")[0],
                     data=await kwargs.get("data_file").read(),
+                    format_file=kwargs.get("format_file"),
                 )
 
                 kwargs.update(result=pdf)

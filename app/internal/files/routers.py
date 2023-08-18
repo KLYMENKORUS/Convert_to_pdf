@@ -1,7 +1,14 @@
 from typing import Annotated, Any
 from io import BytesIO
 
-from fastapi import APIRouter, Depends, UploadFile, File, Response, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    UploadFile,
+    File,
+    Response,
+    status,
+)
 from pydantic import EmailStr
 
 from app.utils.format_file import FormatFile

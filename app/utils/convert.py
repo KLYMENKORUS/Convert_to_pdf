@@ -6,13 +6,11 @@ from tortoise.exceptions import DoesNotExist, IntegrityError
 
 from app.services.redis import RedisTools
 from app.repositories.files import FileRepository
-from app.worker.tasks import convert_file
-from app.utils.docx2pdf import Docx2Pdf
+from app.worker.tasks import convert_file, jpg2pdf
 
 
 @dataclass(slots=True)
 class Convert:
-    doc2pdf = Docx2Pdf()
     file_repo = FileRepository()
     exception = HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,
@@ -23,8 +21,9 @@ class Convert:
         match kwargs.get("action"):
             case "redis":
                 if not await RedisTools.get_pair(kwargs.get("filename")):
-                    return convert_file.delay(data=kwargs.get("data"))
-
+                    return self.filter_format_file(
+                        kwargs.get("format_file"), kwargs.get("data")
+                    )
                 else:
                     raise self.exception
             case "db":
@@ -34,4 +33,13 @@ class Convert:
                     ):
                         raise self.exception
                 except (DoesNotExist, IntegrityError):
-                    return convert_file.delay(data=kwargs.get("data"))
+                    return self.filter_format_file(
+                        kwargs.get("format_file"), kwargs.get("data")
+                    )
+
+    def filter_format_file(self, format_file: str, data: bytes) -> Any:
+        match format_file:
+            case ".docx":
+                return convert_file.delay(data)
+            case ".jpg":
+                return jpg2pdf.delay(data)
