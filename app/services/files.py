@@ -2,6 +2,7 @@ import logging
 from typing import Any, Optional
 
 from celery.result import AsyncResult
+from fastapi import HTTPException, status
 
 from app.utils import AbstractRepo
 from app.utils.wrapper import Convert, DoesntNotExists, TasksCelery
@@ -64,6 +65,15 @@ class FileServiceRedis:
     @Convert("redis")
     async def write_to_redis(self, **kwargs: Any) -> None:
         FileServiceRedis.filename = kwargs.get("filename").split(".")[0]
+
+        if files := await RedisTools.task_celery():
+            file = AsyncResult(files[0].split(b"-", 3)[-1])
+
+            if file:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="A file with this name is already being converted",
+                )
 
         return
 
