@@ -11,6 +11,7 @@ from celery.result import AsyncResult
 from app.services.redis import RedisTools
 from app.utils.convert import Convert
 from app.repositories.files import FileRepository
+from app.utils.format_file import FormatFile
 
 
 P = ParamSpec("P")
@@ -29,23 +30,28 @@ class Convert:
         detail="Wrong file format",
     )
 
+    FORMAT_VALIDATIONS = {
+        format_file.value: format_file.name for format_file in list(FormatFile)
+    }
+
     def __call__(
         self, func: Callable[P, Awaitable[R]]
     ) -> Callable[P, Awaitable[R]]:
         @wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs):
+            format_file = kwargs.get("format_file")
+            filename = kwargs.get("filename")
+
             if (
-                kwargs.get("format_file") == ".docx"
-                and kwargs.get("filename").split(".")[1] == "docx"
-            ) or (
-                kwargs.get("format_file") == ".jpg"
-                and kwargs.get("filename").split(".")[1] == "jpg"
+                format_file in self.FORMAT_VALIDATIONS
+                and filename.split(".")[1]
+                == self.FORMAT_VALIDATIONS[format_file]
             ):
                 pdf = await self.convert(
                     action=self.action,
-                    filename=kwargs.get("filename").split(".")[0],
+                    filename=filename.split(".")[0],
                     data=await kwargs.get("data_file").read(),
-                    format_file=kwargs.get("format_file"),
+                    format_file=format_file,
                 )
 
                 kwargs.update(result=pdf)
