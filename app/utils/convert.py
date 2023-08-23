@@ -40,6 +40,8 @@ class Convert:
     def filter_format_file(self, format_file: str, data: bytes) -> Any:
         match format_file:
             case ".docx":
-                return convert_file.delay(data)
+                result = convert_file.delay(data)
             case ".jpg":
-                return jpg2pdf.delay(data)
+                result = jpg2pdf.delay(data)
+
+        return result

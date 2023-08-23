@@ -24,12 +24,16 @@ class FileService:
     @Convert("db")
     @CheckUser()
     async def create_file(self, **kwargs: Any) -> dict[str, Any]:
-        FileService.dict_file = dict(
+        cls = type(self)
+        cls.dict_file = dict(
             user=kwargs.get("user"),
             file_name=kwargs.get("filename").split(".")[0],
             data_file=kwargs.get("result"),
         )
-        FileService.func_create = self.file_repo.add
+        cls.func_create = self.file_repo.add
+
+        await cls.to_database()
+
         return
 
     @classmethod
@@ -37,13 +41,20 @@ class FileService:
     async def to_database(cls, **kwargs: Any):
         file: AsyncResult = kwargs.get("file")
 
-        if file.status == "SUCCESS" and file is not None:
-            cls.dict_file.update(data_file=file.result)
-            await cls.func_create(**cls.dict_file)
-            logger.info("Successfully file added to Database")
+        match file.status:
+            case "SUCCESS":
+                cls.dict_file.update(data_file=file.result)
+                await cls.func_create(**cls.dict_file)
+                logger.info("Successfully file added to Database")
 
-            await RedisTools.delete_key(*kwargs.get("files"))
-            logger.info("Successfully deleted")
+                await RedisTools.delete_key(*kwargs.get("files"))
+                logger.info("Successfully deleted")
+
+            case "PENDING":
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="A file with this name is already being converted",
+                )
 
     @CheckUser()
     @DoesntNotExists("db")
@@ -64,30 +75,29 @@ class FileServiceRedis:
 
     @Convert("redis")
     async def write_to_redis(self, **kwargs: Any) -> None:
-        FileServiceRedis.filename = kwargs.get("filename").split(".")[0]
+        cls = type(self)
+        cls.filename = kwargs.get("filename").split(".")[0]
 
-        if files := await RedisTools.task_celery():
-            file = AsyncResult(files[0].split(b"-", 3)[-1])
-
-            if file:
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail="A file with this name is already being converted",
-                )
-
-        return
+        await cls.to_redis()
 
     @classmethod
     @TasksCelery()
     async def to_redis(cls, **kwargs: Any):
         file: AsyncResult = kwargs.get("file")
 
-        if file.status == "SUCCESS" and file is not None:
-            await RedisTools.set_pair(cls.filename, file.result)
-            logger.info("Successfully file added to Redis")
+        match file.status:
+            case "SUCCESS":
+                await RedisTools.set_pair(cls.filename, file.result)
+                logger.info("Successfully file added to Redis")
 
-            await RedisTools.delete_key(*kwargs.get("files"))
-            logger.info("Successfully deleted")
+                await RedisTools.delete_key(*kwargs.get("files"))
+                logger.info("Successfully deleted")
+
+            case "PENDING":
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="A file with this name is already being converted",
+                )
 
     @DoesntNotExists("redis")
     async def get_file_redis(self, **kwargs: Any) -> bytes:
