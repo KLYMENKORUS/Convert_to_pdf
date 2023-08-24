@@ -8,6 +8,9 @@
     <li>Клонируйте репозиторий:
         <pre><code>git clone https://github.com/KLYMENKORUS/Convert_to_pdf.git</code></pre>
     </li>
+    <li>
+        <pre><code>Создать файл .env по образцу .env_example</code></pre>
+    </li>
     <li>Запустите команду:
         <pre><code>docker-compose up -d --build</code></pre>
     </li>
@@ -71,10 +74,6 @@
 <pre><code>DELETE file/delete?{filename}</code></pre>
 
 <p>Удаление файла по его названию</p>
-
-<h2>Примеры использования</h2>
-
-<p>Примеры использования методов API можно найти в файле <a href="examples.md">examples.md</a>.</p>
 
 <h2>Автор</h2>
 
