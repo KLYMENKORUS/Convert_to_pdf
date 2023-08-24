@@ -93,7 +93,7 @@ class DoesntNotExists:
                 case "db":
                     try:
                         if await self.file_repo.get(
-                            file_name=kwargs.get("filename")
+                            "file_name", kwargs.get("filename")
                         ):
                             return await func(*args, **kwargs)
 

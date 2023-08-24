@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Any
 
 from tortoise.models import Model
 
@@ -9,7 +10,7 @@ class AbstractRepo(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get(self, *args, **kwargs):
+    async def get(self, field: str, value: Any):
         raise NotImplementedError
 
     @abstractmethod
@@ -27,19 +28,16 @@ class AbstractRepo(ABC):
 class TortoiseRepo(AbstractRepo):
     model: Model = None
 
-    async def add(self, *args, **kwargs):
+    async def add(self, *args, **kwargs) -> Model:
         return await self.model.create(**kwargs)
 
-    async def get(self, *args, **kwargs):
-        if kwargs.get("file_name"):
-            return await self.model.get(file_name=kwargs.get("file_name"))
-        else:
-            return await self.model.get(email=kwargs.get("email"))
+    async def get(self, field: str, value: Any) -> Model:
+        return await self.model.get(**{field: value})
 
-    async def delete(self, *args, **kwargs):
+    async def delete(self, *args, **kwargs) -> None:
         return await self.model.filter(
             file_name=kwargs.get("filename"), user_id=kwargs.get("user_id")
         ).delete()
 
-    async def all_by_filter(self, **kwargs):
+    async def all_by_filter(self, **kwargs) -> list[Model]:
         return await self.model.filter(user_id=kwargs.get("user_id"))

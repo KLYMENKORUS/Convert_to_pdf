@@ -29,7 +29,7 @@ class Convert:
             case "db":
                 try:
                     if await self.file_repo.get(
-                        file_name=kwargs.get("filename")
+                        "file_name", kwargs.get("filename")
                     ):
                         raise self.exception
                 except (DoesNotExist, IntegrityError):

@@ -23,7 +23,7 @@ class UserAlreadyExists:
         @wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs):
             try:
-                if await self.user_service.get(**kwargs):
+                if await self.user_service.get("email", kwargs.get("email")):
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
                         detail=self.message_error.format(kwargs.get("email")),
@@ -49,7 +49,7 @@ class CheckUser:
         async def wrapper(*args: P.args, **kwargs: P.kwargs):
             try:
                 if user := await self.user_service.get(
-                    email=kwargs.get("email")
+                    "email", kwargs.get("email")
                 ):
                     kwargs.update(user=user)
                     return await func(*args, **kwargs)

@@ -46,7 +46,7 @@ class CurrentUserMiddleware:
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        user = await self.user_repo.get(email=token_payload.sub)
+        user = await self.user_repo.get("email", token_payload.sub)
 
         if user is None:
             raise HTTPException(
@@ -74,7 +74,7 @@ class AuthenticateUser:
 
     async def auth_user(self, **kwargs) -> Any:
         try:
-            user = await self.user_repo.get(email=kwargs.get("email"))
+            user = await self.user_repo.get("email", kwargs.get("email"))
 
             if not Hasher.verify_password(
                 kwargs.get("password"), user.hashed_password
