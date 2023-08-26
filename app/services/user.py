@@ -1,7 +1,7 @@
 from typing import Any
 
 from app.utils import AbstractRepo
-from app.utils.auth import UserAlreadyExists, Hasher
+from app.utils.auth import UserAlreadyExists, Hasher, CheckUser
 
 
 class UserService:
@@ -18,3 +18,8 @@ class UserService:
 
     async def get_user(self, *args: Any):
         return await self.user_repo.get(*args)
+
+    @CheckUser()
+    async def delete(self, **kwargs: Any):
+        kwargs.pop("user")
+        return await self.user_repo.delete(**kwargs)

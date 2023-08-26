@@ -46,12 +46,13 @@ class CurrentUserMiddleware:
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        user = await self.user_repo.get("email", token_payload.sub)
+        try:
+            user = await self.user_repo.get("email", token_payload.sub)
 
-        if user is None:
+        except DoesNotExist:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Could not find user",
+                detail="User with does not exist",
             )
 
         return user

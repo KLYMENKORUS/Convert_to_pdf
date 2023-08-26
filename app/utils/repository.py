@@ -14,7 +14,7 @@ class AbstractRepo(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def delete(self, *args, **kwargs):
+    async def delete(self, **kwargs):
         raise NotImplementedError
 
     @abstractmethod
@@ -28,16 +28,14 @@ class AbstractRepo(ABC):
 class TortoiseRepo(AbstractRepo):
     model: Model = None
 
-    async def add(self, *args, **kwargs) -> Model:
+    async def add(self, *args, **kwargs: Any) -> Model:
         return await self.model.create(**kwargs)
 
     async def get(self, field: str, value: Any) -> Model:
         return await self.model.get(**{field: value})
 
-    async def delete(self, *args, **kwargs) -> None:
-        return await self.model.filter(
-            file_name=kwargs.get("filename"), user_id=kwargs.get("user_id")
-        ).delete()
+    async def delete(self, **kwargs: Any):
+        return await self.model.filter(**kwargs).delete()
 
-    async def all_by_filter(self, **kwargs) -> list[Model]:
+    async def all_by_filter(self, **kwargs: Any) -> list[Model]:
         return await self.model.filter(user_id=kwargs.get("user_id"))

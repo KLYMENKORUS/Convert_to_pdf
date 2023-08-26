@@ -59,7 +59,7 @@ class FileService:
     @CheckUser()
     @DoesntNotExists("db")
     async def get_file_db(self, **kwargs: Any) -> bytes:
-        file = await self.file_repo.get("file_name", kwargs.get("filename"))
+        file = await self.file_repo.get("file_name", kwargs.get("file_name"))
         return file.data_file
 
     async def all_files_by_user(self, **kwargs: Any) -> Any:

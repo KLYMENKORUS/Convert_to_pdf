@@ -1,2 +1,2 @@
-from .decorator import UserAlreadyExists
+from .decorator import UserAlreadyExists, CheckUser
 from .hashing import Hasher

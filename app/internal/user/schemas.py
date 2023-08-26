@@ -1,5 +1,6 @@
 import uuid
 from typing import Optional
+from fastapi import status
 
 from pydantic import EmailStr, BaseModel, Field
 
@@ -15,6 +16,11 @@ class UserCreate(BaseModel):
     username: str
     email: EmailStr
     password: str
+
+
+class UserDelete(BaseModel):
+    status: int = Field(..., examples=[status.HTTP_200_OK])
+    detail: str = Field(..., examples=["Delete user successfully"])
 
 
 class TokenSchemas(BaseModel):

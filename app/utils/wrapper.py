@@ -95,6 +95,8 @@ class DoesntNotExists:
                         if await self.file_repo.get(
                             "file_name", kwargs.get("filename")
                         ):
+                            kwargs.update(file_name=kwargs.pop("filename"))
+                            
                             return await func(*args, **kwargs)
 
                     except DoesNotExist:
