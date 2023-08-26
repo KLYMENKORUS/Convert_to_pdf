@@ -15,7 +15,7 @@ from app.utils.format_file import FormatFile
 from app.internal.user.dependencies import current_user
 from app.database import User
 from .dependencies import file_services
-from .schemas import FilesModel, ResponseFiles
+from .schemas import FilesModel, ResponseFiles, FileDelete
 
 
 router = APIRouter(prefix="/file", tags=["File"])
@@ -77,14 +77,16 @@ async def get_all(
     ]
 
 
-@router.delete("/delete", summary="Deleted file by user")
+@router.delete(
+    "/delete", summary="Deleted file by user", response_model=FileDelete
+)
 async def delete(
     filename: str,
     user: Annotated[User, Depends(current_user())],
     file_service: file_services,
-) -> dict[str, Any]:
+) -> FileDelete:
     await file_service.file_delete(filename=filename, user_id=user.id)
 
-    return dict(
-        status=status.HTTP_200_OK, detail="Delete operation successfully"
+    return FileDelete(
+        status=status.HTTP_200_OK, detail="Delete file successfully"
     )

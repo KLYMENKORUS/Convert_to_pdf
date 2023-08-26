@@ -1,5 +1,7 @@
 from uuid import UUID, uuid4
+
 from pydantic import BaseModel, Field, EmailStr
+from fastapi import status
 
 
 class FilesModel(BaseModel):
@@ -21,3 +23,8 @@ class ResponseFiles(BaseModel):
             200,
         ],
     )
+
+
+class FileDelete(BaseModel):
+    status: int = Field(..., examples=[status.HTTP_200_OK])
+    detail: str = Field(..., examples=["Delete operation successfully"])
