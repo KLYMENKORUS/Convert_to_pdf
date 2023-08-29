@@ -27,7 +27,7 @@ class FileService:
         cls = type(self)
         cls.dict_file = dict(
             user=kwargs.get("user"),
-            file_name=kwargs.get("filename").split(".")[0],
+            file_name=kwargs.get("filename"),
             data_file=kwargs.get("result"),
         )
         cls.func_create = self.file_repo.add
@@ -76,7 +76,7 @@ class FileServiceRedis:
     @Convert("redis")
     async def write_to_redis(self, **kwargs: Any) -> None:
         cls = type(self)
-        cls.filename = kwargs.get("filename").split(".")[0]
+        cls.filename = kwargs.get("filename")
 
         await cls.to_redis()
 

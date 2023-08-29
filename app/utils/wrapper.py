@@ -1,7 +1,7 @@
 import asyncio
 from dataclasses import dataclass
 from functools import wraps
-from typing import ParamSpec, TypeVar, Callable, Awaitable
+from typing import ParamSpec, TypeVar, Callable, Awaitable, Type, ClassVar
 
 from fastapi import HTTPException, status
 from fastapi.concurrency import run_in_threadpool
@@ -11,7 +11,7 @@ from celery.result import AsyncResult
 from app.services.redis import RedisTools
 from app.utils.convert import Convert
 from app.repositories.files import FileRepository
-from app.utils.format_file import FormatFile
+from app.utils.format_file import FormatFile, Cyrillic
 
 
 P = ParamSpec("P")
@@ -24,7 +24,8 @@ DB_MESSAGE = "File with given name does not exist"
 @dataclass(frozen=True, slots=True)
 class Convert:
     action: str
-    convert = Convert()
+    convert: ClassVar[Type[Convert]] = Convert()
+    cyrillic: ClassVar[Type[Cyrillic]] = Cyrillic()
     wrong_format = HTTPException(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         detail="Wrong file format",
@@ -39,8 +40,9 @@ class Convert:
     ) -> Callable[P, Awaitable[R]]:
         @wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs):
-            format_file = kwargs.get("format_file")
-            filename = kwargs.get("filename")
+            format_file: str = kwargs.get("format_file")
+            filename: str = kwargs.get("filename")
+            check_filename = self.cyrillic(filename.split(".")[0])
 
             if (
                 format_file in self.FORMAT_VALIDATIONS
@@ -49,12 +51,12 @@ class Convert:
             ):
                 pdf = await self.convert(
                     action=self.action,
-                    filename=filename.split(".")[0],
+                    filename=check_filename,
                     data=await kwargs.get("data_file").read(),
                     format_file=format_file,
                 )
 
-                kwargs.update(result=pdf)
+                kwargs.update(result=pdf, filename=check_filename)
                 kwargs.pop("format_file")
 
                 return await func(*args, **kwargs)
@@ -96,7 +98,7 @@ class DoesntNotExists:
                             "file_name", kwargs.get("filename")
                         ):
                             kwargs.update(file_name=kwargs.pop("filename"))
-                            
+
                             return await func(*args, **kwargs)
 
                     except DoesNotExist:

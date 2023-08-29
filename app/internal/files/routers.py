@@ -1,4 +1,4 @@
-from typing import Annotated, Any
+from typing import Annotated
 from io import BytesIO
 
 from fastapi import (
@@ -14,7 +14,7 @@ from pydantic import EmailStr
 from app.utils.format_file import FormatFile
 from app.internal.user.dependencies import current_user
 from app.database import User
-from .dependencies import file_services
+from .dependencies import file_services, cyrillic
 from .schemas import FilesModel, ResponseFiles, FileDelete
 
 
@@ -46,7 +46,7 @@ async def add_files(
 
 @router.get("/get", summary="Get file by name")
 async def get_file(
-    filename: str,
+    filename: Annotated[str, Depends(cyrillic())],
     file_service: file_services,
     username: EmailStr | None = None,
 ) -> Response:

@@ -1,11 +1,12 @@
 from dataclasses import dataclass
-from typing import Annotated, Any
+from typing import Annotated, Any, Type
 
 from fastapi import Depends
 
 
 from app.repositories.files import FileRepository
 from app.services import FileService, FileServiceRedis
+from app.utils.format_file import Cyrillic
 
 
 @dataclass(slots=True)
@@ -34,6 +35,10 @@ class OperationFiles:
     @classmethod
     async def file_delete(cls, **kwargs: Any) -> None:
         await cls.file_serv.file_delete(**kwargs)
+
+
+def cyrillic() -> Type[Cyrillic]:
+    return Cyrillic()
 
 
 file_services = Annotated[OperationFiles, Depends(OperationFiles)]

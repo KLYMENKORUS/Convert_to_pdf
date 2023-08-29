@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, ClassVar, Type
 
 from fastapi import HTTPException, status
 from tortoise.exceptions import DoesNotExist, IntegrityError
@@ -11,7 +11,7 @@ from app.worker.tasks import convert_file, jpg2pdf
 
 @dataclass(slots=True)
 class Convert:
-    file_repo = FileRepository()
+    file_repo: ClassVar[Type[FileRepository]] = FileRepository()
     exception = HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,
         detail=f"A file with the same name already exists",
@@ -40,6 +40,8 @@ class Convert:
     def filter_format_file(self, format_file: str, data: bytes) -> Any:
         match format_file:
             case ".docx":
+                result = convert_file.delay(data)
+            case ".odt":
                 result = convert_file.delay(data)
             case ".jpg":
                 result = jpg2pdf.delay(data)
