@@ -1,5 +1,4 @@
-from dataclasses import dataclass
-from typing import Annotated, Any, Type
+from typing import Annotated, Any, ClassVar, Type
 
 from fastapi import Depends
 
@@ -9,10 +8,9 @@ from app.services import FileService, FileServiceRedis
 from app.utils.format_file import Cyrillic
 
 
-@dataclass(slots=True)
 class OperationFiles:
-    file_serv = FileService(FileRepository)
-    redis_serv = FileServiceRedis()
+    file_serv: ClassVar[FileService] = FileService(FileRepository)
+    redis_serv: ClassVar[FileServiceRedis] = FileServiceRedis()
 
     @classmethod
     async def add_operation(cls, **kwargs) -> Any:
